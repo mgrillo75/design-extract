@@ -1,5 +1,41 @@
 # Changelog
 
+## [12.16.0] — 2026-06-06
+
+**motionlang grows two framework-agnostic emitters + the website PDF download is fixed.**
+
+The motion language already shipped to Framer Motion and Motion One. This
+release covers the two surfaces that needed no framework at all — plain CSS
+and Tailwind — and fixes the brand-book PDF download on the website.
+
+- **Motion CSS (`<host>-motion.css`)** — drop-in stylesheet: `--duration-*`
+  and `--ease-*` custom properties from the live page, reusable `@keyframes`
+  (`fade-in` / `slide-up` / `scale-in` / `pop`, plus any on-page `@keyframes`
+  reconstructed from their real steps), `.mo-*` utility classes wired to the
+  vars, and a `prefers-reduced-motion: reduce` guard so motion degrades to
+  none for users who ask for it. No build step, no framework.
+
+- **Tailwind motion preset (`<host>-motion.tailwind.js`)** — a require-able
+  `theme.extend` block mapping the extracted timing onto Tailwind's own
+  scales: `transitionDuration`, `transitionTimingFunction` (incl. a `spring`
+  curve when an overshoot bezier is detected), `keyframes` and `animation`
+  utilities (`animate-slide-up`, …). Merge into `tailwind.config` and use
+  class names instead of magic numbers.
+
+  Both are exposed through `designlang/api` as the `motion-css` and
+  `motion-tailwind` renderer ids, alongside the existing `framer-motion` and
+  `motion-one` emitters.
+
+- **Website: brand-book PDF download fixed.** Downloads sometimes produced a
+  file that wouldn't open. Root cause: the streaming extractor wrote its
+  Blob cache fire-and-forget *after* the response closed, so on serverless
+  the write was killed before completing — leaving `/api/pdf/<hash>` with no
+  cached design and returning a 404 JSON body that the browser dutifully
+  saved as `host-brand.pdf`. The cache write is now awaited before the
+  stream closes, and the download button fetches + validates the response is
+  actually a PDF before saving (and surfaces an error instead of writing a
+  broken file).
+
 ## [12.15.0] — 2026-05-21
 
 **motionlang — motion becomes a first-class extractable + shippable artefact.**

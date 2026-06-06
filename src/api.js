@@ -40,6 +40,8 @@ import { formatAgentPrompt }     from './formatters/agent-prompt.js';
 import { formatMotionLab }       from './formatters/motion-lab.js';
 import { formatFramerMotion }    from './formatters/framer-motion.js';
 import { formatMotionOne }       from './formatters/motion-one.js';
+import { formatMotionCss }       from './formatters/motion-css.js';
+import { formatMotionTailwind }  from './formatters/motion-tailwind.js';
 
 // Utils
 import { compressPalette }       from './utils/palette-compress.js';
@@ -94,6 +96,8 @@ export const RENDERERS = Object.freeze({
   'motion-lab':          (d) => formatMotionLab(d),
   'framer-motion':       (d) => formatFramerMotion(d),
   'motion-one':          (d) => formatMotionOne(d),
+  'motion-css':          (d) => formatMotionCss(d),
+  'motion-tailwind':     (d) => formatMotionTailwind(d),
 
   // frameworks
   'react-theme':         (d) => formatReactTheme(d),
@@ -159,6 +163,8 @@ export function renderAll(design, opts = {}) {
     'motion-lab':         'motion.html',
     'framer-motion':      'motion.framer.js',
     'motion-one':         'motion.one.js',
+    'motion-css':         'motion.css',
+    'motion-tailwind':    'motion.tailwind.js',
     'react-theme':        'theme.js',
     'shadcn-theme':       'shadcn-theme.css',
     'vue-theme':          'theme.vue.js',
