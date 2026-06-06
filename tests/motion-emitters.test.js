@@ -3,6 +3,8 @@ import assert from 'node:assert';
 
 import { formatFramerMotion } from '../src/formatters/framer-motion.js';
 import { formatMotionOne } from '../src/formatters/motion-one.js';
+import { formatMotionCss } from '../src/formatters/motion-css.js';
+import { formatMotionTailwind } from '../src/formatters/motion-tailwind.js';
 
 const designWithSpringAndScroll = {
   meta: { url: 'https://example.com/' },
@@ -90,5 +92,55 @@ describe('motionlang emitters', () => {
     const damping = Number(match[2]);
     assert.ok(stiffness >= 80 && stiffness <= 700, 'stiffness in expected band');
     assert.ok(damping >= 8 && damping <= 30, 'damping reduced from default by overshoot');
+  });
+
+  it('motion-css: emits custom properties from extracted tokens', () => {
+    const out = formatMotionCss(designWithSpringAndScroll);
+    assert.match(out, /:root \{/);
+    assert.match(out, /--duration-md: 280ms;/);
+    assert.match(out, /--ease-ease-out: cubic-bezier\(0\.16, 1, 0\.3, 1\)/);
+    // detected overshoot bezier surfaces as a spring easing var
+    assert.match(out, /--ease-spring: cubic-bezier\(0\.34, 1\.56, 0\.64, 1\)/);
+  });
+
+  it('motion-css: always guards prefers-reduced-motion', () => {
+    const out = formatMotionCss(designWithSpringAndScroll);
+    const min = formatMotionCss(minimalDesign);
+    assert.match(out, /@media \(prefers-reduced-motion: reduce\)/);
+    assert.match(min, /@media \(prefers-reduced-motion: reduce\)/);
+    assert.match(out, /\.mo-slide-up \{ animation-name: slide-up;/);
+  });
+
+  it('motion-css: degrades to sane defaults with no motion signal', () => {
+    const out = formatMotionCss(minimalDesign);
+    assert.match(out, /--duration-base: 300ms;/);
+    assert.match(out, /--ease-standard: cubic-bezier\(0\.25, 0\.1, 0\.25, 1\)/);
+  });
+
+  it('motion-tailwind: emits a requireable theme.extend block', () => {
+    const out = formatMotionTailwind(designWithSpringAndScroll);
+    assert.match(out, /module\.exports = \{ extend \};/);
+    const mod = { exports: {} };
+    new Function('module', out)(mod);
+    const { extend } = mod.exports;
+    assert.equal(extend.transitionDuration.md, '280ms');
+    assert.equal(extend.transitionTimingFunction['ease-out'], 'cubic-bezier(0.16, 1, 0.3, 1)');
+    assert.ok(extend.keyframes['fade-in'], 'built-in fade-in keyframe present');
+    assert.ok(extend.animation['slide-up'], 'slide-up animation utility present');
+  });
+
+  it('motion-tailwind: reconstructs used on-page @keyframes', () => {
+    const out = formatMotionTailwind(designWithSpringAndScroll);
+    const mod = { exports: {} };
+    new Function('module', out)(mod);
+    // the fixture's used @keyframes is literally named "fadeIn" → kebab "fade-in"
+    assert.ok(mod.exports.extend.keyframes['fade-in']);
+  });
+
+  it('motion-tailwind: spring easing appears when overshoot bezier detected', () => {
+    const out = formatMotionTailwind(designWithSpringAndScroll);
+    const mod = { exports: {} };
+    new Function('module', out)(mod);
+    assert.equal(mod.exports.extend.transitionTimingFunction.spring, 'cubic-bezier(0.34, 1.56, 0.64, 1)');
   });
 });

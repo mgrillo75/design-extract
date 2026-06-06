@@ -210,8 +210,11 @@ export async function POST(request) {
         controller.enqueue(ndjson({ type: 'summary', summary: buildSummary(design) }));
         controller.enqueue(ndjson({ type: 'files', files }));
 
-        // Fire-and-forget cache write.
-        putCached(key, { design }).catch(() => {});
+        // Persist BEFORE the stream closes. On serverless the instance is
+        // frozen once the response ends, so a fire-and-forget write gets
+        // killed mid-flight — leaving /x/<hash> and /api/pdf/<hash> with no
+        // cached design to render (the source of "downloaded PDF won't open").
+        await putCached(key, { design });
       } catch (err) {
         console.error('[extract] failed', { url: targetUrl, ip, message: err?.message });
         controller.enqueue(ndjson({ type: 'error', error: err?.message || 'Extraction failed' }));
