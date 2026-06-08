@@ -6,31 +6,7 @@
 // already holds — no Blob round-trip — so a just-finished extraction
 // can never fail with "extraction not found".
 
-async function getLocalBrowserOptions() {
-  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    const chromium = (await import('@sparticuz/chromium')).default;
-    return {
-      executablePath: await chromium.executablePath(),
-      browserArgs: chromium.args,
-    };
-  }
-  return {};
-}
-
-async function getBrowserOptions() {
-  if (process.env.BROWSERLESS_TOKEN) {
-    const region = process.env.BROWSERLESS_REGION || 'production-sfo';
-    return { wsEndpoint: `wss://${region}.browserless.io/?token=${process.env.BROWSERLESS_TOKEN}` };
-  }
-  return getLocalBrowserOptions();
-}
-
-// Open a browser from options; never let a dead remote browser win.
-async function openBrowser(chromium, opts) {
-  if (opts.wsEndpoint) return chromium.connect(opts.wsEndpoint);
-  if (opts.executablePath) return chromium.launch({ executablePath: opts.executablePath, args: opts.browserArgs || [] });
-  return chromium.launch();
-}
+import { getBrowserOptions, getLocalBrowserOptions, openBrowser } from './browser.js';
 
 // Subresource allowlist for the untrusted POST path. The brand book is
 // self-contained inline CSS plus Google Fonts, so we allow only data:
