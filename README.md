@@ -11,6 +11,12 @@
 </p>
 
 <p align="center">
+  <img src="https://raw.githubusercontent.com/Manavarya09/design-extract/main/designlang.png" alt="designlang in action — extracts DTCG tokens, Tailwind config, Figma variables, brand book PDF" width="100%">
+</p>
+
+[![designlang on npm](https://pkgfolio.vercel.app/embed/pkg/designlang?v=2)](https://www.npmjs.com/package/designlang)
+
+<p align="center">
   <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">
     <img src="./assets/atlas-cloud-logo.svg" alt="Atlas Cloud" width="220">
   </a>
@@ -20,14 +26,6 @@
   Powered by <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a> for OpenAI-compatible <code>--smart</code> classification.
   For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
 </p>
-
----
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Manavarya09/design-extract/main/designlang.png" alt="designlang in action — extracts DTCG tokens, Tailwind config, Figma variables, brand book PDF" width="100%">
-</p>
-
-[![designlang on npm](https://pkgfolio.vercel.app/embed/pkg/designlang?v=2)](https://www.npmjs.com/package/designlang)
 
 **designlang** points a headless browser at any URL and reads the design system off the live DOM. One command emits 17+ files — DTCG tokens, Tailwind config, shadcn theme, Figma variables, motion tokens, typed component anatomy, brand voice, page-intent labels, and a paste-ready prompt pack for v0 / Lovable / Cursor / Claude Artifacts.
 
