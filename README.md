@@ -58,6 +58,8 @@ npx designlang clone https://stripe.com                # working Next.js starter
 npx designlang --full https://stripe.com               # screenshots + responsive + interactions
 ```
 
+> Try designlang on [Bloome](https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82).
+
 Drop a live design-score badge in any README:
 
 ```markdown
