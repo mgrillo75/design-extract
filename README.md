@@ -16,15 +16,23 @@
 
 [![designlang on npm](https://pkgfolio.vercel.app/embed/pkg/designlang?v=2)](https://www.npmjs.com/package/designlang)
 
+## Sponsors
+
 <p align="center">
   <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">
     <img src="./assets/atlas-cloud-logo.svg" alt="Atlas Cloud" width="220">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">
+    <img src="./assets/bloome.png" alt="Bloome" width="360">
   </a>
 </p>
 
 <p align="center">
   Powered by <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a> for OpenAI-compatible <code>--smart</code> classification.
   For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
+  <br>
+  <a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">Bloome</a> — run in cloud.
 </p>
 
 **designlang** points a headless browser at any URL and reads the design system off the live DOM. One command emits 17+ files — DTCG tokens, Tailwind config, shadcn theme, Figma variables, motion tokens, typed component anatomy, brand voice, page-intent labels, and a paste-ready prompt pack for v0 / Lovable / Cursor / Claude Artifacts.
