@@ -29,10 +29,9 @@
 </p>
 
 <p align="center">
-  Powered by <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a> for OpenAI-compatible <code>--smart</code> classification.
-  For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
+  <strong><a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a></strong> — powers OpenAI-compatible <code>--smart</code> classification. For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
   <br>
-  <a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">Bloome</a> deploys your AI clone to handle every audience conversation — running in the cloud, 24/7.
+  <strong><a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">Bloome</a></strong> — deploys your AI clone to handle every audience conversation, running in the cloud, 24/7.
 </p>
 
 ---
