@@ -35,6 +35,8 @@
   <a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">Bloome</a> deploys your AI clone to handle every audience conversation — running in the cloud, 24/7.
 </p>
 
+---
+
 **designlang** points a headless browser at any URL and reads the design system off the live DOM. One command emits 17+ files — DTCG tokens, Tailwind config, shadcn theme, Figma variables, motion tokens, typed component anatomy, brand voice, page-intent labels, and a paste-ready prompt pack for v0 / Lovable / Cursor / Claude Artifacts.
 
 It also goes where extractors don't: **layout patterns**, **responsive behavior across 4 breakpoints**, **hover / focus / active states**, **WCAG contrast scoring**, **multi-page consistency**, **drift checks against a live source-of-truth**, **visual-diffs**, and a **shareable graded report card**.
