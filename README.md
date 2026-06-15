@@ -32,6 +32,8 @@
   <strong><a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud</a></strong> — powers OpenAI-compatible <code>--smart</code> classification. For AI coding workflows, try the <a href="https://www.atlascloud.ai/console/coding-plan?utm_source=github&utm_medium=referral&utm_campaign=design-extract">Atlas Cloud coding plan</a>.
   <br>
   <strong><a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">Bloome</a></strong> — deploys your AI clone to handle every audience conversation, running in the cloud, 24/7.
+  <br>
+  Try designlang on <a href="https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82">Bloome</a>.
 </p>
 
 ---
@@ -57,8 +59,6 @@ npx designlang battle stripe.com vercel.com            # head-to-head graded fig
 npx designlang clone https://stripe.com                # working Next.js starter
 npx designlang --full https://stripe.com               # screenshots + responsive + interactions
 ```
-
-> Try designlang on [Bloome](https://bloome.im/agent/join/XP8NQwFj?ref=9ZZRRy82).
 
 Drop a live design-score badge in any README:
 
