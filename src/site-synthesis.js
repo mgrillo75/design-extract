@@ -239,7 +239,9 @@ export function synthesizeSite(pages, options = {}) {
     const c = d.colors || {};
     for (const sw of c.all || []) {
       const hex = normalizeHex(sw.hex);
-      if (hex) record(colorTally, hex, { hex, count: sw.count || 1 }, pid, sw.count || 1);
+      // Keep the full swatch (rgb/hsl/contexts/count) — downstream emitters
+      // read those fields. Only the hex is normalized for the cluster key.
+      if (hex) record(colorTally, hex, { ...sw, hex, contexts: sw.contexts || [] }, pid, sw.count || 1);
     }
     if (c.primary?.hex) {
       const hex = normalizeHex(c.primary.hex);

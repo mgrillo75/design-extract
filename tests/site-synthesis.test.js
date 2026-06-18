@@ -22,13 +22,13 @@ function page(url, type, overrides = {}) {
     design: {
       meta: { url },
       colors: {
-        primary: { hex: '#ff4800', count: 20 },
+        primary: { hex: '#ff4800', rgb: { r: 255, g: 72, b: 0 }, hsl: { h: 17, s: 100, l: 50 }, count: 20 },
         backgrounds: ['#ffffff'],
         text: ['#111111'],
         all: [
-          { hex: '#ff4800', count: 20 },
-          { hex: '#111111', count: 30 },
-          { hex: '#ffffff', count: 40 },
+          { hex: '#ff4800', rgb: [255, 72, 0], count: 20, contexts: ['background'] },
+          { hex: '#111111', rgb: [17, 17, 17], count: 30, contexts: ['color'] },
+          { hex: '#ffffff', rgb: [255, 255, 255], count: 40, contexts: ['background'] },
         ],
       },
       typography: {
@@ -139,6 +139,18 @@ describe('synthesizeSite', () => {
     const r = synthesizeSite(pages);
     assert.equal(r.pagesAnalyzed, 2, 'errored page dropped, bare page kept');
     assert.ok(r.canonical.colors);
+  });
+
+  it('preserves full swatch fields (rgb/contexts) for downstream emitters', () => {
+    // Regression: synthesis once reduced swatches to {hex,count}, dropping
+    // `contexts`/`rgb` and crashing formatMarkdown (which reads c.contexts.join
+    // and c.rgb). Canonical swatches must carry the original fields through.
+    const r = synthesizeSite([page('https://x.com/', 'home'), page('https://x.com/p', 'pricing')]);
+    assert.ok(r.canonical.colors.all.length > 0);
+    for (const c of r.canonical.colors.all) {
+      assert.ok('rgb' in c, 'swatch keeps rgb');
+      assert.ok(Array.isArray(c.contexts), 'swatch keeps contexts array');
+    }
   });
 
   it('is deterministic across runs', () => {
