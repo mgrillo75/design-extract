@@ -46,6 +46,7 @@ It also goes where extractors don't: **layout patterns**, **responsive behavior 
 
 ```bash
 npx designlang https://stripe.com                      # extract everything
+npx designlang site stripe.com                         # whole-site: one canonical system + consistency grade ← v12.23
 npx designlang studio                                  # live token editor: edit, preview, export, share ← v12.19
 npx designlang verify stripe.com                       # fidelity score: rebuild from tokens vs live ← v12.18
 npx designlang pair stripe.com linear.app              # fuse two designs (visuals A × voice B)    ← v12.8
@@ -65,6 +66,27 @@ Drop a live design-score badge in any README:
 ```markdown
 ![Design Score](https://designlang.app/badge/stripe.com.svg)
 ```
+
+## Whole-site design system (`site`)
+
+Most extractors read a single URL. `designlang site` crawls a site's canonical
+pages (home, pricing, docs, blog, about, product…) and synthesizes **one**
+de-duplicated system. Every token is elected by *coverage* — the share of pages
+that use it — so what's genuinely site-wide is separated from one-off,
+page-local choices. Near-identical colours are merged in OKLab. It's fully
+deterministic and free; no API key.
+
+```bash
+npx designlang site stripe.com --max-pages 8
+```
+
+You get, alongside the standard pack emitted from the **canonical** system:
+
+| File | What it is |
+|---|---|
+| `*-site-system.json` | canonical unified tokens + coverage + drift |
+| `*-site-coverage.md` | every token tagged 🟢 site-wide / 🟡 section / 🔴 page-local, with the pages using it |
+| `*-site-consistency.md` | a 0–100 consistency grade, per-category breakdown, and the off-system outliers to consolidate |
 
 ## Install
 
