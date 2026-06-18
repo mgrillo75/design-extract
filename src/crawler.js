@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import { mkdirSync } from 'fs';
 import { join } from 'path';
+import { extractMediaDarkColors } from './extractors/dark-mode-pair.js';
 
 const MAX_ELEMENTS = 5000;
 
@@ -168,6 +169,10 @@ export async function crawlPage(url, options = {}) {
     // Dark mode extraction
     let darkData = null;
     if (dark) {
+      // Issue #110: capture dark themes shipped purely via
+      // @media (prefers-color-scheme: dark) by flipping just the media feature
+      // on the already-loaded page (no reload) before the class/context pass.
+      const mediaColors = await extractMediaDarkColors(page).catch(() => null);
       await context.close();
       const darkContext = await browser.newContext({
         viewport: { width, height },
@@ -178,6 +183,7 @@ export async function crawlPage(url, options = {}) {
       await darkPage.waitForLoadState('networkidle').catch(() => {});
       await darkPage.evaluate(() => document.fonts.ready).catch(() => {});
       darkData = await extractPageData(darkPage);
+      darkData.mediaColors = mediaColors;
       await darkContext.close();
     } else {
       await context.close();

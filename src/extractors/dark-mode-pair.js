@@ -10,6 +10,64 @@
 // Pure function. No Page handle, no side effects — takes the finished design
 // object and returns a plain JSON structure.
 
+import { extractColors } from './colors.js';
+
+// Issue #110 — many sites ship dark mode *only* through
+// `@media (prefers-color-scheme: dark)` and never toggle a class, so the
+// class/context dark pass yields no delta for them. This emulates just the
+// media feature on the already-loaded page (no reload) via Playwright's
+// `page.emulateMedia({ colorScheme: 'dark' })`, re-reads the computed styles
+// and pulls the dark colours out of them. Returns null when the page can't be
+// emulated (e.g. a stub without the API) or produced no styles.
+export async function extractMediaDarkColors(page) {
+  if (!page || typeof page.emulateMedia !== 'function') return null;
+  await page.emulateMedia({ colorScheme: 'dark' });
+  const styles = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('*')).slice(0, 5000).map(el => {
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return {
+        tag: el.tagName.toLowerCase(),
+        classList: Array.from(el.classList).join(' '),
+        role: el.getAttribute('role') || '',
+        area: r.width * r.height,
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+        backgroundImage: cs.backgroundImage,
+        borderColor: cs.borderColor,
+      };
+    }),
+  );
+  // Restore the original scheme so any later pass on this page sees light.
+  try { await page.emulateMedia({ colorScheme: 'light' }); } catch { /* ignore */ }
+  if (!Array.isArray(styles) || styles.length === 0) return null;
+  return extractColors(styles);
+}
+
+function colorKey(c) {
+  return (typeof c === 'string' ? c : (c && c.hex) || '').toLowerCase();
+}
+
+// Merge the prefers-color-scheme dark colours into the class/context dark
+// colours. The class-based pass is usually the more deliberate theme, so it
+// wins whenever it already has a value; the media pass only fills the gaps.
+// `all` is unioned so a media-only dark theme still yields a non-empty set.
+export function mergeDarkColors(classBased, media) {
+  if (!media) return classBased || null;
+  if (!classBased) return media;
+  const out = { ...classBased };
+  for (const role of ['primary', 'secondary', 'accent']) {
+    if (!out[role] && media[role]) out[role] = media[role];
+  }
+  for (const key of ['neutrals', 'backgrounds', 'text', 'gradients']) {
+    if (!(classBased[key] || []).length && (media[key] || []).length) out[key] = media[key];
+  }
+  const base = classBased.all || [];
+  const seen = new Set(base.map(colorKey));
+  out.all = [...base, ...(media.all || []).filter(c => !seen.has(colorKey(c)))];
+  return out;
+}
+
 function hexOf(c) {
   if (!c) return null;
   if (typeof c === 'string') return c.toLowerCase();

@@ -9,6 +9,7 @@ import { extractComponentAnatomy, formatAnatomyStubs } from '../src/extractors/c
 import { extractVoice } from '../src/extractors/voice.js';
 import { lintTokens } from '../src/lint.js';
 import { formatMotionTokens } from '../src/formatters/motion-tokens.js';
+import { extractMediaDarkColors, mergeDarkColors } from '../src/extractors/dark-mode-pair.js';
 
 describe('v9: motion extractor', () => {
   it('buckets durations into named tokens', () => {
@@ -101,3 +102,48 @@ describe('v9: token lint', () => {
     assert.ok(typeof r.score === 'number');
   });
 });
+
+describe('issue #110: prefers-color-scheme dark detection', () => {
+  it('emulates prefers-color-scheme: dark on a fake page and extracts colours', async () => {
+    const media = [];
+    // A fake Playwright page: records emulateMedia() calls and returns the
+    // computed styles a media-query dark theme would expose.
+    const fakePage = {
+      async emulateMedia(opts) { media.push(opts); },
+      async evaluate() {
+        return [
+          { tag: 'body', classList: '', role: '', area: 800000, color: 'rgb(243, 241, 234)', backgroundColor: 'rgb(10, 9, 8)', backgroundImage: 'none', borderColor: 'rgb(10, 9, 8)' },
+          { tag: 'a', classList: 'btn', role: '', area: 4000, color: 'rgb(255, 255, 255)', backgroundColor: 'rgb(77, 155, 255)', backgroundImage: 'none', borderColor: 'rgb(77, 155, 255)' },
+        ];
+      },
+    };
+    const colors = await extractMediaDarkColors(fakePage);
+    assert.ok(media.some(m => m.colorScheme === 'dark'), 'emulated prefers-color-scheme: dark');
+    assert.ok(colors && colors.all.length > 0, 'returns a non-empty dark colour set');
+  });
+
+  it('returns null for a page without emulateMedia support', async () => {
+    assert.equal(await extractMediaDarkColors({}), null);
+    assert.equal(await extractMediaDarkColors(null), null);
+  });
+
+  it('prefers the class-based dark colours but fills gaps from the media pass', () => {
+    const classBased = { primary: { hex: '#111111' }, secondary: null, accent: null, neutrals: [], backgrounds: ['#0a0908'], text: [], gradients: [], all: [{ hex: '#111111' }, { hex: '#0a0908' }] };
+    const mediaColors = { primary: { hex: '#4d9bff' }, secondary: null, accent: null, neutrals: [], backgrounds: [], text: ['#f3f1ea'], gradients: [], all: [{ hex: '#4d9bff' }, { hex: '#f3f1ea' }] };
+    const merged = mergeDarkColors(classBased, mediaColors);
+    assert.equal(merged.primary.hex, '#111111', 'class-based role wins');
+    assert.deepEqual(merged.text, ['#f3f1ea'], 'missing list filled from media pass');
+    assert.ok(merged.all.length >= 3, 'all colours are unioned across both passes');
+  });
+
+  it('falls back to the media pass when the class-based dark set is empty', () => {
+    const mediaColors = { primary: { hex: '#4d9bff' }, all: [{ hex: '#4d9bff' }] };
+    assert.equal(mergeDarkColors(null, mediaColors), mediaColors);
+    assert.equal(mergeDarkColors({ all: [] }, mediaColors).all.length, 1);
+    assert.equal(mergeDarkColors(classOnly(), null).primary.hex, '#111111');
+  });
+});
+
+function classOnly() {
+  return { primary: { hex: '#111111' }, all: [{ hex: '#111111' }] };
+}

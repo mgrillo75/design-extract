@@ -41,6 +41,7 @@ import { extractBackgroundPatterns } from './extractors/background-patterns.js';
 import { extractStackIntel } from './extractors/stack-intel.js';
 import { extractFormStates } from './extractors/form-states.js';
 import { formatDtcgTokens } from './formatters/dtcg-tokens.js';
+import { mergeDarkColors } from './extractors/dark-mode-pair.js';
 
 function safeExtract(fn, ...args) {
   try { return fn(...args); } catch { return null; }
@@ -118,8 +119,11 @@ export async function extractDesignLanguage(url, options = {}) {
   }
 
   if (rawData.dark) {
+    const darkColors = safeExtract(extractColors, rawData.dark.computedStyles) || { primary: null, secondary: null, accent: null, neutrals: [], backgrounds: [], text: [], gradients: [], all: [] };
     design.darkMode = {
-      colors: safeExtract(extractColors, rawData.dark.computedStyles) || { primary: null, secondary: null, accent: null, neutrals: [], backgrounds: [], text: [], gradients: [], all: [] },
+      // Issue #110: fold the prefers-color-scheme media pass into the dark
+      // colours so sites that ship dark mode only via @media still yield a set.
+      colors: mergeDarkColors(darkColors, rawData.dark.mediaColors || null),
       variables: safeExtract(extractVariables, rawData.dark.cssVariables) || {},
     };
   }
