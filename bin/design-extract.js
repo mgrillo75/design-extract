@@ -153,7 +153,7 @@ program
       console.error(chalk.red('\n  Invalid width. Must be >= 100\n'));
       process.exit(1);
     }
-    if (merged.depth < 0 || merged.depth > 50) {
+    if (isNaN(merged.depth) || merged.depth < 0 || merged.depth > 50) {
       console.error(chalk.red('\n  Invalid depth. Must be 0-50\n'));
       process.exit(1);
     }
