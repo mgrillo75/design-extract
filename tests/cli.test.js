@@ -62,6 +62,12 @@ describe('CLI', () => {
     assert.ok(output.includes('--base-url'));
   });
 
+  it('clone exposes a --fidelity flag', () => {
+    const output = execFileSync('node', [CLI_PATH, 'clone', '--help'], { encoding: 'utf-8' });
+    assert.ok(output.includes('--fidelity'));
+    assert.ok(output.includes('FIDELITY.md') || output.includes('token-fidelity'));
+  });
+
   it('gallery exits non-zero when no reports are found', () => {
     try {
       execFileSync('node', [CLI_PATH, 'gallery', resolve(import.meta.dirname, '..', 'src')], { encoding: 'utf-8', stdio: 'pipe' });

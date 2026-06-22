@@ -81,6 +81,17 @@ function validateUrl(url) {
   }
 }
 
+// The root command also owns -o/--out and greedily consumes it before a
+// subcommand sees it, so a sub-level default masks any override. Resolve the
+// out dir robustly: an explicit sub value wins; else the root's value *only if
+// it was actually passed on the CLI* (not its own default); else the fallback.
+function resolveOut(opts, command, fallback) {
+  if (opts.out) return resolve(opts.out);
+  const parent = command?.parent;
+  if (parent?.getOptionValueSource?.('out') === 'cli') return resolve(parent.opts().out);
+  return resolve(fallback);
+}
+
 const program = new Command();
 
 program
@@ -888,10 +899,14 @@ program
 program
   .command('clone <url>')
   .description('Generate a working Next.js starter from a site\'s design')
-  .option('-o, --out <dir>', 'output directory', './cloned-design')
-  .action(async (url, opts) => {
+  .option('-o, --out <dir>', 'output directory (default: ./cloned-design)')
+  .option('--fidelity', 'after generating, measure token-fidelity vs the live site and write FIDELITY.md + a correction plan into the clone')
+  .option('--system-chrome', 'use the system Chrome install instead of bundled Chromium')
+  .action(async (url, opts, command) => {
     if (!url.startsWith('http')) url = `https://${url}`;
     validateUrl(url);
+
+    const outDir = resolveOut(opts, command, './cloned-design');
 
     console.log('');
     console.log(chalk.bold('  designlang clone'));
@@ -904,16 +919,50 @@ program
       const design = await extractDesignLanguage(url);
       spinner.text = 'Generating Next.js project...';
 
-      const result = generateClone(design, resolve(opts.out));
+      const result = generateClone(design, outDir);
 
       spinner.succeed('Clone generated!');
       console.log('');
       for (const f of result.files) {
         console.log(`  ${chalk.green('✓')} ${chalk.cyan(f)}`);
       }
+
+      // Optional fidelity pass: reuse the extraction, rebuild components from the
+      // tokens the clone is built on, pixel-diff vs the live site, and write a
+      // correction plan into the clone — the "did we actually capture it?" loop.
+      if (opts.fidelity) {
+        console.log('');
+        spinner.start('Measuring clone fidelity (tokens vs live)...');
+        try {
+          const { verifyDesign } = await import('../src/verify/index.js');
+          const { combineFidelity } = await import('../src/fidelity/index.js');
+          const { formatFidelityMarkdown, formatFidelityCard, formatFidelityJson } = await import('../src/formatters/fidelity-report.js');
+          const verify = await verifyDesign(url, {
+            design,
+            components: ['button', 'card'],
+            channel: opts.systemChrome ? 'chrome' : undefined,
+          });
+          const combined = combineFidelity({ verify });
+          const host = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } })();
+          const report = { host, url, generatedAt: new Date().toISOString(), ...combined, motionAspects: [] };
+          writeFileSync(join(outDir, 'FIDELITY.md'), formatFidelityMarkdown(report), 'utf8');
+          writeFileSync(join(outDir, 'fidelity.json'), formatFidelityJson(report), 'utf8');
+          writeFileSync(join(outDir, 'fidelity-card.svg'), formatFidelityCard(report), 'utf8');
+          spinner.succeed(`Clone token-fidelity ${report.overall == null ? 'n/a' : report.overall + '/100'} (${report.grade}) → ${join(outDir, 'FIDELITY.md')}`);
+          for (const d of report.directives.slice(0, 5)) {
+            console.log(`  ${chalk.gray(`[${d.priority}/${d.area}]`)} ${d.issue}`);
+          }
+          console.log(chalk.gray(`\n  For full visual + motion fidelity of the running clone:`));
+          console.log(chalk.gray(`  cd ${outDir} && npm install && npm run dev   # then:`));
+          console.log(chalk.gray(`  designlang fidelity ${url} --clone http://localhost:3000`));
+        } catch (e) {
+          spinner.fail(`Fidelity pass failed: ${e.message}`);
+        }
+      }
+
       console.log('');
       console.log(chalk.bold('  To run:'));
-      console.log(chalk.gray(`  cd ${opts.out} && npm install && npm run dev`));
+      console.log(chalk.gray(`  cd ${outDir} && npm install && npm run dev`));
       console.log('');
 
     } catch (err) {
@@ -1998,18 +2047,19 @@ program
 program
   .command('visual-diff <before> <after>')
   .description('Side-by-side HTML diff of two URLs with screenshots + token changes')
-  .option('-o, --out <dir>', 'output directory', './design-extract-output')
-  .action(async (before, after, opts) => {
+  .option('-o, --out <dir>', 'output directory (default: ./design-extract-output)')
+  .action(async (before, after, opts, command) => {
     if (!before.startsWith('http')) before = `https://${before}`;
     if (!after.startsWith('http')) after = `https://${after}`;
     validateUrl(before); validateUrl(after);
+    const outDir = resolveOut(opts, command, './design-extract-output');
     const spinner = ora('Capturing before + after').start();
     try {
       const { visualDiff, formatVisualDiffHtml } = await import('../src/visual-diff.js');
       const r = await visualDiff({ beforeUrl: before, afterUrl: after });
       const html = formatVisualDiffHtml(r);
-      mkdirSync(resolve(opts.out), { recursive: true });
-      const path = join(resolve(opts.out), `visual-diff-${Date.now()}.html`);
+      mkdirSync(outDir, { recursive: true });
+      const path = join(outDir, `visual-diff-${Date.now()}.html`);
       writeFileSync(path, html, 'utf8');
       spinner.succeed(`Visual diff written → ${path}`);
     } catch (err) {
@@ -2022,13 +2072,14 @@ program
 program
   .command('verify <url>')
   .description('Rebuild components from the extracted tokens and pixel-diff them against the live page — a 0-100 fidelity score + loss heatmaps.')
-  .option('-o, --out <dir>', 'output directory', './design-extract-output')
+  .option('-o, --out <dir>', 'output directory (default: ./design-extract-output)')
   .option('-c, --components <list>', 'comma-separated components to check (button,card,input,nav)', 'button,card')
   .option('--min <score>', 'exit non-zero if site fidelity is below this (CI gate)', parseInt)
   .option('--system-chrome', 'use the system Chrome install instead of bundled Chromium')
-  .action(async (url, opts) => {
+  .action(async (url, opts, command) => {
     if (!url.startsWith('http')) url = `https://${url}`;
     validateUrl(url);
+    const outDir = resolveOut(opts, command, './design-extract-output');
     const spinner = ora('Extracting + rebuilding from tokens').start();
     try {
       const { verifyDesign } = await import('../src/verify/index.js');
@@ -2036,12 +2087,12 @@ program
       const components = String(opts.components).split(',').map((s) => s.trim()).filter(Boolean);
       const report = await verifyDesign(url, {
         components,
-        out: resolve(opts.out),
+        out: outDir,
         channel: opts.systemChrome ? 'chrome' : undefined,
       });
-      mkdirSync(resolve(opts.out), { recursive: true });
-      const htmlPath = join(resolve(opts.out), 'verify.html');
-      const jsonPath = join(resolve(opts.out), 'verify.json');
+      mkdirSync(outDir, { recursive: true });
+      const htmlPath = join(outDir, 'verify.html');
+      const jsonPath = join(outDir, 'verify.json');
       writeFileSync(htmlPath, formatVerifyHtml(report), 'utf8');
       writeFileSync(jsonPath, formatVerifyJson(report), 'utf8');
 
@@ -2088,9 +2139,7 @@ program
         opts: { channel, extract: { motionRuntime: !!opts.motionRuntime } },
       });
 
-      // The root command also owns -o/--out and consumes it before the
-      // subcommand sees it, so fall back to the parent-parsed value.
-      const outDir = resolve(opts.out || command.parent?.opts().out || './design-extract-output');
+      const outDir = resolveOut(opts, command, './design-extract-output');
       mkdirSync(outDir, { recursive: true });
       writeFileSync(join(outDir, 'fidelity.json'), formatFidelityJson(report), 'utf8');
       writeFileSync(join(outDir, 'fidelity.md'), formatFidelityMarkdown(report), 'utf8');
@@ -2123,7 +2172,7 @@ program
   .option('--base-url <url>', 'absolute base URL for OG image links (e.g. https://gallery.example.com)')
   .action(async (dir, opts, command) => {
     const scanDir = resolve(dir || './design-extract-output');
-    const outDir = resolve(opts.out || command.parent?.opts().out || './gallery');
+    const outDir = resolveOut(opts, command, './gallery');
     const spinner = ora(`Scanning ${scanDir} for fidelity reports`).start();
     try {
       const { loadReportsFromDir } = await import('../src/gallery/load.js');
