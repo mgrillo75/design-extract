@@ -26,7 +26,18 @@ them look at motion. This release closes that gap.
   card and OG/Twitter tags, so a shared link unfurls the measured number. New
   modules `src/gallery/` (`index.js` model + builder, `load.js` report loader)
   and `src/formatters/gallery.js`. `--title`, `--base-url`.
-- **39 new unit tests** across motion fidelity, the correction-plan/loop, report
+- **`designlang clone --fidelity`.** The clone command can now grade itself:
+  after generating the Next.js starter it rebuilds the components from the
+  tokens, pixel-diffs them against the live site, and drops `FIDELITY.md` +
+  `fidelity.json` + `fidelity-card.svg` + a ranked correction plan into the
+  project. Verified end-to-end — the generated clone builds with `next build`
+  and scores against the running site via `designlang fidelity`.
+- **Fixed `-o/--out` on `clone`, `verify`, and `visual-diff`.** The root command
+  greedily consumed `-o` and a sub-level default masked the override, so these
+  silently wrote to their default directory. New `resolveOut()` helper resolves
+  the output directory correctly (explicit sub value → root value if actually
+  passed → fallback).
+- **40 new unit tests** across motion fidelity, the correction-plan/loop, report
   and gallery formatters, the report loader, and CLI registration.
 
 ## [12.23.0] — 2026-06-18

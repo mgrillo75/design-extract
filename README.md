@@ -111,6 +111,14 @@ npx designlang fidelity https://stripe.com --clone http://localhost:3000
 npx designlang fidelity https://stripe.com --clone http://localhost:3000 --min 90   # CI gate
 ```
 
+Generating the clone with `designlang clone`? Add `--fidelity` and it grades the
+clone's token basis against the live site the moment it's built — writing
+`FIDELITY.md` + a correction plan straight into the project, no separate step:
+
+```bash
+npx designlang clone https://stripe.com --fidelity
+```
+
 You get `fidelity.md` (score + motion table + correction plan), `fidelity.json`,
 a shareable `fidelity-card.svg` (`88% · B · stripe.com`), and a `fidelity-diff.png`
 loss heatmap.
