@@ -1,19 +1,42 @@
 # Changelog
 
-## [Unreleased] — 13.0.0
+## [13.0.0] — 2026-06-25
 
 **Live Extraction Theatre — watch the real browser read a site, on the website, and a 3× bigger gallery.**
 
-_In progress. See `docs/superpowers/specs/2026-06-25-extraction-theatre-design.md`._
+The website now *shows* the work instead of describing it: paste a URL and watch
+a real headless Chromium open the page and read its whole design system, live.
 
-- **Live Extraction Theatre.** Paste a URL on the site and watch real headless
-  Chromium open the page and read its design system, live — a split stage with
-  the browser on the left and the design system assembling itself on the right
-  as tokens fly off the page. Streamed over the existing NDJSON `/api/extract`
-  (new opt-in `theatre` flag, fully backwards-compatible), recorded to Blob and
-  replayable so cached runs still look live. New homepage hero + `/watch` page.
-- **Gallery expansion.** 13 → ~36 recognizable sites with real grades, plus
-  sort/filter and a "watch it extract" link into the Theatre.
+- **Live Extraction Theatre.** A split stage — the real browser on the left, the
+  design system assembling itself on the right as palette, type, spacing and
+  motion lift off the page. Driven by the *actual* extraction: the browser's CDP
+  screencast is streamed frame-by-frame over the existing NDJSON `/api/extract`,
+  interleaved with the real `stage`/`token` events.
+  - New `src/screencast.js` — a throttled, capped, injectable wrapper over
+    `Page.startScreencast` (acks every frame, caps frames + duration). Threaded
+    through `crawlPage` as an opt-in `onScreencastFrame` hook; runs over the load
+    + auto-interact window and never breaks extraction.
+  - New opt-in `theatre` flag on `/api/extract` interleaves `{type:'frame'}`
+    events. **Fully backwards-compatible** — every token-only consumer is
+    untouched.
+  - **Record + replay** (`website/lib/reel.js`): a fresh run's frames are
+    recorded to Blob keyed by URL hash; cached runs replay them (merged with the
+    token paint via a compressed timeline) so a cache hit still looks live with
+    no second browser. A `replayOnly` flag lets the homepage hero autoplay a reel
+    without ever launching a browser.
+  - Pure, tested core: `theatre-reducer.js`, `reel.js`, `screencast.js`,
+    `theatre.js`. UI: `BrowserStage`, `SystemRail`, `StageTicker`, `Theatre`;
+    `prefers-reduced-motion` safe.
+- **Homepage hero + `/watch`.** The "try it" hero is now the Theatre (autoplaying
+  a flagship reel). A dedicated `/watch` page — built for recording/sharing —
+  takes `?u=<url>`, runs live, and has its own OG card. Permalinks gain a
+  "▶ watch it extract" link.
+- **Gallery 13 → 37.** 24 more recognizable sites (Supabase, Raycast, Framer,
+  Resend, Clerk, Cal, Discord, Netflix, Duolingo, Coinbase, Loom, Webflow,
+  Postman, Replit, Railway, Render, Mintlify, PostHog, Sentry, Perplexity, Ramp,
+  Retool, PlanetScale, v0), each graded on a **real** `designlang` run. New
+  industry-tag filter, grade sort, per-card grade pills, and "▶ watch live"
+  links into the Theatre.
 
 ## [12.24.0] — 2026-06-22
 

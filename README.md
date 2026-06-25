@@ -69,6 +69,21 @@ Drop a live design-score badge in any README:
 ![Design Score](https://designlang.app/badge/stripe.com.svg)
 ```
 
+## Watch it read — live Extraction Theatre (`v13`)
+
+Don't take the output on faith — **watch it happen.** On
+[designlang.app/watch](https://designlang.app/watch) you paste a URL and a real
+headless Chromium opens the page and reads its entire design system in real
+time: a split stage with the live browser on the left and the design system —
+palette, type, spacing, motion — assembling itself on the right as each token
+lifts off the page.
+
+It's driven by the *actual* extraction (the browser's CDP screencast streamed
+frame-by-frame alongside the real token events), recorded so a shared link
+replays the exact run. No install, no account. Every gallery card can be watched
+the same way, and the [gallery](https://designlang.app/gallery) now spans **37
+real-graded design systems**.
+
 ## Whole-site design system (`site`)
 
 Most extractors read a single URL. `designlang site` crawls a site's canonical
