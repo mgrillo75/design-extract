@@ -28,7 +28,7 @@ export default function Theatre({ autoStart = null, compact = false }) {
   const inputRef = useRef(null);
   const runningRef = useRef(false);
 
-  const run = useCallback(async (rawUrl) => {
+  const run = useCallback(async (rawUrl, { replayOnly = false } = {}) => {
     const url = (rawUrl || '').trim();
     if (!url || runningRef.current) return;
     runningRef.current = true;
@@ -41,7 +41,7 @@ export default function Theatre({ autoStart = null, compact = false }) {
       res = await fetch('/api/extract?theatre=1', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url, theatre: true }),
+        body: JSON.stringify({ url, theatre: true, replayOnly }),
       });
     } catch {
       dispatch({ type: 'error', error: 'Network error — check your connection.' });
@@ -89,9 +89,10 @@ export default function Theatre({ autoStart = null, compact = false }) {
     }
   }, []);
 
-  // Autoplay a flagship reel on mount (homepage hero).
+  // Autoplay a flagship reel on mount (homepage hero) — replay-only, so it
+  // never launches a browser; if no reel exists yet it just stays idle.
   useEffect(() => {
-    if (autoStart) run(autoStart);
+    if (autoStart) run(autoStart, { replayOnly: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart]);
 
