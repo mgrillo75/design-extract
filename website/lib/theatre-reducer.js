@@ -29,6 +29,10 @@ export function theatreReducer(state, action) {
       // Fresh run — clear everything but stay mounted.
       return { ...initialTheatreState, status: 'streaming' };
 
+    case 'idle':
+      // Autoplay found no recorded reel — settle back to idle, not stuck loading.
+      return { ...state, status: 'idle' };
+
     case 'cache':
       return { ...state, cached: true };
 
