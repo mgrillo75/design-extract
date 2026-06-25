@@ -71,6 +71,13 @@ test('files marks done; a later error after files still flips to error', () => {
   assert.equal(err.error, 'boom');
 });
 
+test('idle settles a started run back to idle', () => {
+  const started = theatreReducer(initialTheatreState, { type: 'start' });
+  assert.equal(started.status, 'streaming');
+  const idle = theatreReducer(started, { type: 'idle' });
+  assert.equal(idle.status, 'idle');
+});
+
 test('cache + permalink fold', () => {
   const s = reduceEvents([
     { type: 'cache', cached: true },

@@ -151,10 +151,25 @@ export async function POST(request) {
 
   const ip = extractIp(request);
   const theatre = wantsTheatre(body, request.url);
+  // Autoplay: replay a recorded reel if one exists, but NEVER launch a browser.
+  // Keeps the homepage hero free to loop without burning compute per visitor.
+  const replayOnly = body?.replayOnly === true;
 
   // Cache hit serves free — no rate-limit accounting, repeats cost nothing.
   const key = cacheKey(targetUrl);
   const cached = await getCached(key);
+
+  if (!cached && replayOnly) {
+    const idle = new ReadableStream({
+      start(controller) {
+        controller.enqueue(ndjson({ type: 'idle' }));
+        controller.close();
+      },
+    });
+    return new Response(idle, {
+      headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': 'no-store' },
+    });
+  }
 
   if (!cached) {
     // First-line per-instance memory guard (cheap, blunts hammering within an instance).
