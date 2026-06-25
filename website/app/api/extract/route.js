@@ -13,6 +13,7 @@ import { validateTargetUrl } from '../../../../website/lib/url-safety.js';
 import { checkRate, checkRateBlob } from '../../../../website/lib/rate-limit.js';
 import { cacheKey, getCached, putCached } from '../../../../website/lib/cache.js';
 import { buildFiles, buildSummary } from '../../../../website/lib/build-files.js';
+import { wantsTheatre, frameEvent, THEATRE_SCREENCAST_OPTS } from '../../../../website/lib/theatre.js';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -130,6 +131,7 @@ export async function POST(request) {
   const targetUrl = validation.url;
 
   const ip = extractIp(request);
+  const theatre = wantsTheatre(body, request.url);
 
   // Cache hit serves free — no rate-limit accounting, repeats cost nothing.
   const key = cacheKey(targetUrl);
@@ -178,9 +180,22 @@ export async function POST(request) {
         controller.enqueue(ndjson({ type: 'stage', name: 'crawl' }));
 
         const browserOpts = await getBrowserOptions();
+
+        // Theatre: a frame sink that streams what Chromium paints, live, into
+        // the same NDJSON response. Opt-in only — undefined otherwise, so the
+        // crawler skips the screencast entirely.
+        const onScreencastFrame = theatre
+          ? (frame) => {
+              try { controller.enqueue(ndjson(frameEvent(frame))); } catch { /* stream closed */ }
+            }
+          : undefined;
+        const theatreOpts = theatre
+          ? { onScreencastFrame, screencastOpts: THEATRE_SCREENCAST_OPTS }
+          : {};
+
         let design;
         try {
-          design = await extractDesignLanguage(targetUrl, browserOpts);
+          design = await extractDesignLanguage(targetUrl, { ...browserOpts, ...theatreOpts });
         } catch (err) {
           // Browserless quota / auth / connection failure — retry once on
           // the bundled Chromium so a dead remote browser never takes the
@@ -188,7 +203,7 @@ export async function POST(request) {
           if (browserOpts.wsEndpoint && isBrowserlessFailure(err)) {
             console.warn('[extract] browserless failed, falling back to bundled chromium', err?.message);
             const fallback = await getLocalBrowserOptions();
-            design = await extractDesignLanguage(targetUrl, fallback);
+            design = await extractDesignLanguage(targetUrl, { ...fallback, ...theatreOpts });
           } else {
             throw err;
           }
